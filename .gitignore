@@ -1,0 +1,23 @@
+# node
+node_modules/
+
+# env
+.env
+.env.*
+
+# logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+
+#files 
+
+frontend/
+
+frontendReact/
+
+New Microsoft Word Document.docx
+testing.docx

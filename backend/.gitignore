@@ -1,0 +1,38 @@
+# dependencies
+node_modules/
+
+# environment variables
+.env
+.env.local
+.env.production
+.env.development
+
+# Next.js
+.next/
+out/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# build
+dist/
+build/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Vercel
+.vercel
+
+# Stripe Setup
+stripe.txt
+stripe.exe
+authDocs.txt
+
+# files 
+Uploads/
+oldRoutes/
+oldcontrollers/
