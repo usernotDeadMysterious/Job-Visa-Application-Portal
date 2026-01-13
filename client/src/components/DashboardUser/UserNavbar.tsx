@@ -1,4 +1,4 @@
-import React, { useEffect, useState, type FormEvent } from "react";
+import React, { useEffect, useState } from "react";
 // import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import {
@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { Bell, User, LogOut, Settings, Bookmark } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { handleSuccess } from "@/utils/utils";
 
 type User = {
@@ -24,9 +24,9 @@ type Props = {
   user?: User | null;
 };
 
-const UserNavbar: React.FC<Props> = ({ logo, onSearch, user = null }) => {
+const UserNavbar: React.FC<Props> = ({ logo, user = null }) => {
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
+  // const [query, setQuery] = useState("");
 
   // lock body scroll when drawer open
   useEffect(() => {
@@ -49,19 +49,12 @@ const UserNavbar: React.FC<Props> = ({ logo, onSearch, user = null }) => {
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
-  function handleSearchSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (onSearch) onSearch(query);
-  }
+  // function handleSearchSubmit(e: FormEvent) {
+  //   e.preventDefault();
+  //   if (onSearch) onSearch(query);
+  // }
   const navigate = useNavigate();
-  const location = useLocation();
-  const navigateToDashboard = () => {
-    if (location.pathname === "/user-dashboard") {
-      alert("You already on dashboard");
-    } else {
-      navigate("/user-dashboard");
-    }
-  };
+  // const location = useLocation();
 
   const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
   const handleLogout = () => {

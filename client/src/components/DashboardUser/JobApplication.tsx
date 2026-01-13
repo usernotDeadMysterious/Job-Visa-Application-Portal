@@ -14,7 +14,10 @@ export default function JobApplication() {
     return (
       <div className="p-6 rounded-lg border border-dashed text-center space-y-3">
         <p className="text-slate-600">No applications yet</p>
-        <Link to="/" className="text-indigo-600 hover:underline font-medium">
+        <Link
+          to="/new-home"
+          className="text-indigo-600 hover:underline font-medium"
+        >
           Apply for jobs
         </Link>
       </div>
@@ -39,7 +42,10 @@ export default function JobApplication() {
       ))}
 
       <div className="pt-2">
-        <Link to="/" className="text-sm text-indigo-600 hover:underline">
+        <Link
+          to="/new-home"
+          className="text-sm text-indigo-600 hover:underline"
+        >
           Apply for more jobs
         </Link>
       </div>

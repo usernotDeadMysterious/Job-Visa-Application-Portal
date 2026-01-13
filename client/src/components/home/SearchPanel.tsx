@@ -179,7 +179,7 @@ export default function JobSearchPanel({
         {/* filters Panel/Sheet */}
         <div
           className={`mb-4 overflow-hidden transition-all duration-200 ${
-            filterOpen ? "max-h-[800px] opacity-100" : "max-h-0 opacity-0"
+            filterOpen ? "max-h-200 opacity-100" : "max-h-0 opacity-0"
           }`}
           aria-hidden={!filterOpen}
         >

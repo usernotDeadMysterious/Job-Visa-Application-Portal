@@ -25,15 +25,6 @@ export default function App() {
     return isAuthenticated ? element : <Navigate to={"/new-login"} />;
   };
 
-  // const handleAdmin = () => {
-  //   const role = localStorage.getItem("role");
-  //   if (role === "ADMIN") {
-  //     return <AdminDashboard />;
-  //   }
-  //   if (role === "SUPER_ADMIN") {
-  //     return <SuperAdminDashboard />;
-  //   }
-  // };
   return (
     <>
       <RefreshHandler setIsAuthenticated={setIsAuthenticated} />
