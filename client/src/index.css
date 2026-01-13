@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+/* Global light/dark styling */
+
+
+
+/* ECG animation */
+.ecg-line {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: ecgMove 6s linear infinite;
+}
+
+@keyframes ecgMove {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Glow orbs */
+.neon-orb {
+  position: absolute;
+  width: 280px;
+  height: 280px;
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle,
+    rgba(34, 211, 238, 0.35),
+    rgba(34, 211, 238, 0.05),
+    transparent 70%
+  );
+  filter: blur(40px);
+  animation: floatOrb 10s ease-in-out infinite alternate;
+}
+
+@keyframes floatOrb {
+  from {
+    transform: translateY(0px) translateX(0px);
+  }
+  to {
+    transform: translateY(-40px) translateX(20px);
+  }
+}

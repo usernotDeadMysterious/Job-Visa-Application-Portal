@@ -1,0 +1,771 @@
+// document.routes.js 
+import express from "express";
+
+import { uploadSingle } from "../config/multer.js";
+import {
+  uploadDocument,
+  getDocuments,
+  deleteDocument,
+} from "../controllers/document.controller.js";
+
+const router = express.Router();
+
+// Upload document
+router.post("/", uploadSingle, uploadDocument);
+
+// Get all documents
+router.get("/", getDocuments);
+
+// Delete document by ID
+router.delete("/:id", deleteDocument);
+
+export default router;
+  // Education Routes 
+import express from "express";
+import {
+  getEducation,
+  upsertEducation
+} from "../controllers/education.controller.js";
+
+const router = express.Router();
+
+router.get("/", getEducation);
+router.put("/", upsertEducation);
+
+export default router;
+import express from "express";
+import { uploadSingle } from "../config/multer.js";
+import {
+  uploadEducationalDocument,
+  getEducationalDocuments,
+  deleteEducationalDocument,
+} from "../controllers/educationalDocument.controller.js";
+
+const router = express.Router();
+
+// Upload DEGREE or TRANSCRIPT
+router.post("/", uploadSingle, uploadEducationalDocument);
+
+// Get all educational documents
+router.get("/", getEducationalDocuments);
+
+// Delete educational document
+router.delete("/:id", deleteEducationalDocument);
+
+export default router;
+import express from "express";
+import { getJobs, getJobById } from "../controllers/job.controller.js";
+
+const router = express.Router();
+
+/**
+ * Public job APIs
+ */
+router.get("/", getJobs);        // Fetch all jobs
+router.get("/:id", getJobById);  // Fetch single job
+
+export default router;
+// routes/jobApplication.routes.js
+import express from "express";
+import { applyForJob } from "../controllers/newJAC.js";
+import { dummyMW } from "../middleware/dummyMW.js";
+import JobApplication from "../models/JobApplication.js";
+
+
+const router = express.Router();
+
+router.post("/apply", dummyMW, applyForJob);
+// GET applied jobs for logged-in user
+router.get("/my",dummyMW , async (req, res) => {
+  const apps = await JobApplication.find({ userId: req.user._id })
+    .populate("jobId"); // IMPORTANT
+
+  res.json(apps);
+});
+
+
+export default router;
+import express from "express";
+import { createCheckoutSession } from "../controllers/PaymentController.js";
+import { dummyMW } from "../middleware/dummyMW.js";
+
+
+const router = express.Router();
+
+router.post("/create-checkout",dummyMW, createCheckoutSession);
+
+export default router;
+import express from "express";
+import { stripeWebhook } from "../controllers/PaymentWebhookController.js";
+
+const router = express.Router();
+
+router.post(
+  "/stripe",
+  express.raw({ type: "application/json" }),
+  stripeWebhook
+);
+
+export const paymentWebhook= router;
+ import express from "express";
+import { dummyMW } from "../middleware/dummyMW.js";
+
+const router = express.Router();
+
+router.get('/', dummyMW , (req,res) => {
+    console.log(
+        "logged in user ", req.user
+    )
+    res.status(200).json([
+
+        {
+           name:"Mobile",
+           price:2000
+        },
+        {
+            name:"TV",
+            price:3000
+        },
+        {
+            name:"LCD",
+            price:4000
+        }
+    ]
+        
+    ) 
+})
+
+
+export const productsRouter = router;// Profile Route 
+import express from "express";
+import { getProfile, upsertProfile } from "../controllers/profile.controller.js";
+
+const router = express.Router();
+
+router.get("/", getProfile);
+router.put("/", upsertProfile);
+
+export default router;
+import express from "express";
+import {
+  applyForVisa,
+  getMyVisaApplications,
+  getVisaApplicationById,
+} from "../controllers/VisaApplicationController.js";
+import { dummyMW } from "../middleware/dummyMW.js";
+
+const router = express.Router();
+
+// Apply for visa
+router.post("/apply", dummyMW, applyForVisa);
+
+// Get all applications of logged-in user
+router.get("/my-applications", dummyMW, getMyVisaApplications);
+
+// Get single application (own)
+router.get("/:id", dummyMW, getVisaApplicationById);
+
+export const VisaRoutes = router;
+import jwt from 'jsonwebtoken'
+const dummyMW = (req,res,next) => {
+    const auth = req.headers['authorization'];
+    if (!auth){
+        return res.status(403)
+        .json({
+            message:'Unauthorized'
+        })
+    }
+    try{
+        const decodedData = jwt.verify(auth, process.env.JWT_SECRET);
+        req.user = decodedData
+        next();
+    }
+    catch(err){
+        return res.status(403)
+        .json({
+            message:'Unauthorized , JWT has Error'
+        })
+    }
+}
+
+export {dummyMW} // Document Controller 
+import Document from "../models/Document.js";
+import fs from "fs";
+import path from "path";
+
+const TEMP_USER_ID = "695b49c87055956ce99aff06";
+
+/**
+ * Upload a document
+ */
+export const uploadDocument = async (req, res) => {
+  try {
+    const { type } = req.body;
+
+    if (!type) {
+      return res.status(400).json({ message: "Document type is required" });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ message: "File is required" });
+    }
+
+    const document = await Document.create({
+      user: TEMP_USER_ID,
+      userId: TEMP_USER_ID,
+      type,
+      filePath: req.file.path,
+      originalName: req.file.originalname,
+      mimeType: req.file.mimetype,
+    });
+
+    res.status(201).json(document);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+/**
+ * Get all documents for user
+ */
+
+
+export const getDocuments = async (req, res) => {
+  try {
+    const filter = { userId: TEMP_USER_ID };
+
+    if (req.query.type) {
+      filter.type = req.query.type;
+    }
+
+    const documents = await Document.find(filter).sort({ createdAt: -1 });
+    res.json(documents);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+/**
+ * Delete a document
+ */
+export const deleteDocument = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const document = await Document.findOne({
+      _id: id,
+      userId: TEMP_USER_ID,
+    });
+
+    if (!document) {
+      return res.status(404).json({ message: "Document not found" });
+    
+    }
+
+
+    // delete file from disk
+    if (document.filePath) {
+      const absolutePath = path.resolve(document.filePath);
+      if (fs.existsSync(absolutePath)) {
+        fs.unlinkSync(absolutePath);
+      }
+    }
+
+    // delete mongo record
+    await document.deleteOne();
+
+    res.json({ message: "Document deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+// Education Controller 
+
+import Education from "../models/Education.js";
+
+const TEMP_USER_ID = "695b49c87055956ce99aff06";
+
+/**
+ * GET education details for user
+ */
+export const getEducation = async (req, res) => {
+  try {
+    const education = await Education.find({ userId: TEMP_USER_ID });
+
+    if (!education || education.length === 0) {
+      return res.status(404).json({ message: "Education details not found" });
+      
+    }
+    
+    res.json(education);
+    console.log('Education Details Found')
+  } catch (error) {
+
+    res.status(500).json({ message: "Server error" });
+    console.log('Server Error Education Details not found')
+  }
+};
+
+/**
+ * UPSERT education
+ * (delete old records and insert new ones from form)
+ */
+export const upsertEducation = async (req, res) => {
+  try {
+    // Expecting an array from frontend form
+    const educationData = req.body;
+
+    // Remove existing education records
+    await Education.deleteMany({ userId: TEMP_USER_ID });
+
+    // Add userId to each education entry
+    const formattedData = educationData.map(item => ({
+      ...item,
+      userId: TEMP_USER_ID
+    }));
+
+    const education = await Education.insertMany(formattedData);
+
+    res.json(education);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+import JobPosting from "../models/JobPosting.js";
+
+/**
+ * GET /api/jobs
+ * Search & fetch active jobs
+ */
+export const getJobs = async (req, res) => {
+  try {
+    const {
+      q,
+      city,
+      country,
+      position,
+      industry,
+      type,
+    } = req.query;
+
+    const filter = {
+      isActive: true,
+    };
+
+    // 🔍 Keyword search
+    if (q && q.trim() !== "") {
+      filter.$or = [
+        { title: { $regex: q, $options: "i" } },
+        { industry: { $regex: q, $options: "i" } },
+        { position: { $regex: q, $options: "i" } },
+      ];
+    }
+
+    // 📍 Location filters
+    if (city) {
+      filter.city = { $regex: `^${city}$`, $options: "i" };
+    }
+
+    if (country) {
+      filter.country = { $regex: `^${country}$`, $options: "i" };
+
+    }
+
+    // 💼 Job attributes
+    if (position) {
+      filter.position = { $regex: `^${position}$`, $options: "i" };
+    }
+
+    if (industry) {
+      filter.industry = { $regex: `^${industry}$`, $options: "i" };
+    }
+
+    if (type) {
+      filter.type = { $regex: `^${type}$`, $options: "i" };
+    }
+
+    const jobs = await JobPosting.find(filter)
+      .sort({ createdAt: -1 });
+
+    res.json(jobs);
+  } catch (error) {
+    console.error("GET /api/jobs ERROR:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+/**
+ * GET /api/jobs/:id
+ * Fetch single job by ID
+ */
+export const getJobById = async (req, res) => {
+  try {
+    const job = await JobPosting.findById(req.params.id);
+
+    if (!job || !job.isActive) {
+      return res.status(404).json({ message: "Job not found" });
+    }
+
+    res.json(job);
+  } catch (error) {
+    console.error("GET /api/jobs/:id ERROR:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+// this is new 
+import Profile from "../models/Profile.js";
+import Education from "../models/Education.js";
+import Document from "../models/Document.js";
+import JobApplication from "../models/JobApplication.js";
+
+export const applyForJob = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { jobId, workExperience } = req.body;
+
+    // prevent duplicate
+    const exists = await JobApplication.findOne({ userId, jobId });
+    if (exists) {
+      return res.status(400).json(
+        { message: "Already applied",
+          success:false,
+         }
+        );
+    }
+
+    /* ===================== */
+    /* FETCH OVERVIEW DATA   */
+    /* ===================== */
+
+    const profile = await Profile.findOne({ userId });
+    const education = await Education.findOne({ userId }).sort({ yearOfPassing: -1 });
+    const documents = await Document.find({ userId });
+
+    if (!profile || !education) {
+      return res.status(400).json({
+        message: "Complete profile & education before applying",
+        success:false,
+      });
+    }
+
+    /* ===================== */
+    /* CREATE APPLICATION    */
+    /* ===================== */
+
+    const application = await JobApplication.create({
+      userId,
+      jobId,
+
+      personalDetails: {
+        fullName: profile.fullName,
+        fatherName: profile.fatherName,
+        nationality: profile.nationality,
+        contactNumber: profile.contactNumber,
+        dateOfBirth: profile.dateOfBirth,
+        address: profile.address,
+      },
+
+      educationDetails: {
+        highestQualification: education.highestQualification,
+        institutionName: education.institutionName,
+        major: education.major,
+        yearOfPassing: education.yearOfPassing,
+        gradesCgpa: education.gradesCgpa,
+      },
+
+      documents: documents.map((doc) => ({
+        type: doc.type,
+        filePath: doc.filePath,
+      })),
+
+      workExperience,
+
+      status: "SUBMITTED",
+      statusHistory: [
+        {
+          status: "SUBMITTED",
+          changedBy: userId,
+          comment: "Application submitted",
+        },
+      ],
+    });
+
+    res.status(201).json({
+      success:true,
+      message: "Job applied successfully",
+      application,
+    });
+  } catch (err) {
+    res.status(500).json({ 
+      success:false,
+      message: "Apply failed", error: err.message });
+  }
+};
+import stripe from "../config/stripe.js";
+
+export const createCheckoutSession = async (req, res) => {
+  try {
+    const userId = req.user?._id;
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      payment_method_types: ["card"],
+
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: "usd",
+            unit_amount: 1000, // $10
+            product_data: {
+              name: "Applications Pass",
+              description: "Lifetime access to job and visa applications",
+            },
+          },
+        },
+      ],
+
+      success_url: `${process.env.FRONTEND_URL}payment/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.FRONTEND_URL}/secure-payment`,
+      metadata: userId ? { userId } : {},
+    });
+
+    return res.json({ url: session.url });
+  } catch (error) {
+    console.error("Stripe Checkout Error:", error);
+    return res.status(500).json({ message: "Payment failed" });
+  }
+};
+import stripe from "../config/stripe.js";
+import { AuthUserModel } from "../models/AuthUserModel.js";
+
+export const stripeWebhook = async (req, res) => {
+  const sig = req.headers["stripe-signature"];
+
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+  } catch (err) {
+    console.error("Webhook signature error", err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object;
+    const userId = session.metadata.userId;
+    console.log("🔥 STRIPE WEBHOOK HIT:", event.type);
+
+    await AuthUserModel.findByIdAndUpdate(userId, {
+      hasActiveAccess: true,
+    });
+  }
+
+  res.json({ received: true });
+};
+// Profile Controller 
+import Profile from '../models/Profile.js'
+
+const TEMP_USER_ID = "695b49c87055956ce99aff06";
+export const getProfile = async (req,res) => {
+    try{
+        const profile = await Profile.findOne({userId: TEMP_USER_ID });
+    if (!profile) {
+      return res.status(404).json({ message: "Profile not found" });
+    }
+
+    res.json(profile);
+    }
+    catch(error){
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+export const upsertProfile = async (req, res) => {
+  try {
+    const profile = await Profile.findOneAndUpdate(
+      { userId: TEMP_USER_ID },
+      { ...req.body, userId: TEMP_USER_ID },
+      { new: true, upsert: true }
+    );
+
+    res.json(profile);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};import VisaApplication from "../models/VisaApplication.js";
+
+export const applyForVisa = async (req, res) => {
+  try {
+    const userId = req.user.id || req.user._id;
+
+    const {
+      passportDetails,
+      purposeOfVisit,
+      travelHistory,
+      supportingDocumentIds = [],
+    } = req.body;
+
+    if (
+      !passportDetails ||
+      !passportDetails.number ||
+      !passportDetails.country ||
+      !passportDetails.expiryDate ||
+      !purposeOfVisit
+    ) {
+      return res.status(400).json({
+        message: "Required fields are missing",
+        status:false,
+      });
+    }
+
+    const visaApplication = await VisaApplication.create({
+      userId,
+      passportDetails,
+      purposeOfVisit,
+      travelHistory,
+      supportingDocumentIds,
+      status: "SUBMITTED",
+      statusHistory: [
+        {
+          status: "SUBMITTED",
+          changedBy: userId,
+          comment: "Visa application submitted",
+        },
+      ],
+    });
+
+    return res.status(201).json({
+      message: "Visa application submitted successfully",
+      status:true,
+      data: visaApplication,
+    });
+  } catch (error) {
+    // console error when needed 
+    console.error("Apply Visa Error:");
+    return res.status(500).json({
+      message: "Failed to submit visa application",
+      status:false,
+    });
+  }
+};
+
+export const getMyVisaApplications = async (req, res) => {
+  try {
+    const userId = req.user.id || req.user._id;
+
+    const applications = await VisaApplication.find({ userId })
+      .populate({
+        path: "supportingDocumentIds",
+        select: "originalName filePath status createdAt",
+      })
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      data: applications,
+    });
+  } catch (error) {
+    console.error("Get Visa Apps Error:", error);
+    return res.status(500).json({
+      message: "Failed to fetch visa applications",
+      status:false,
+    });
+  }
+};
+export const getVisaApplicationById = async (req, res) => {
+  try {
+    const userId = req.user.id || req.user._id;
+    const { id } = req.params;
+
+    const application = await VisaApplication.findOne({
+      _id: id,
+      userId,
+    }).populate({
+      path: "supportingDocumentIds",
+      select: "originalName filePath status createdAt",
+    });
+
+    if (!application) {
+      return res.status(404).json({
+        message: "Visa application not found",
+        status:false,
+      });
+    }
+
+    return res.status(200).json({
+      data: application,
+    });
+  } catch (error) {
+    console.error("Get Visa App Error:", error);
+    return res.status(500).json({
+      message: "Failed to fetch visa application",
+      status:false,
+    });
+  }
+};
+
+// app.js 
+import express from 'express';
+import cors from 'cors';
+import morgan from 'morgan';
+;
+import profileRoute from './routes/profile.route.js';
+import jobRoutes from "./routes/job.routes.js";
+import educationRoutes from "./routes/education.routes.js";
+import documentRoutes from './routes/document.routes.js'
+import educationalDocumentRoutes from "./routes/educationalDocument.routes.js";
+import authRoutes from './routes/auth.routes.js'
+import bodyParser from 'body-parser';
+import {newAuthRouter} from './routes/newAuthRouter.js'
+import { productsRouter } from './routes/ProductsDummyRoute.js';
+import paymentRoutes from './routes/paymentRoutes.js';
+import { paymentWebhook} from './routes/PaymentWebhook.js';
+import  router  from './routes/JobAppRouter.js';
+import {VisaRoutes} from './routes/VisaApplicationRoutes.js'
+const app = express();
+
+app.use(cors());
+app.use(morgan('dev'));
+
+// ⚠️ Webhook must come BEFORE json middleware
+app.use("/api/webhooks", paymentWebhook);
+
+app.use(express.json());
+app.use(bodyParser.json())
+app.use(express.urlencoded({ extended: true }));
+
+
+// USER API's 
+app.use('/auth',authRoutes);
+app.use("/api/profile", profileRoute);
+app.use("/api/jobs", jobRoutes);
+app.use("/api/education", educationRoutes);
+app.use("/api/documents", documentRoutes);
+app.use("/uploads", express.static("uploads"));
+app.use("/api/education-documents", educationalDocumentRoutes);
+
+
+app.use((req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store');
+  next();
+});
+
+// NEw Auth APis 
+app.use ('/new-auth', newAuthRouter);
+app.use ('/products', productsRouter);
+
+// Payment Api's 
+
+app.use("/api/payments", paymentRoutes);
+
+app.use('/api/job-applications',router);
+
+app.use("/api/visa", VisaRoutes);
+
+export default app;
+   u have iguess everything in the current backend 

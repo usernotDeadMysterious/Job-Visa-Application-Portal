@@ -1,0 +1,13 @@
+pnpm create vite@latest frontend --template react-ts
+cd frontend
+pnpm install
+
+pnpm add -D tailwindcss @tailwindcss/postcss postcss autoprefixer
+
+
+pnpm add lucide-react
+pnpm add class-variance-authority clsx tailwind-merge
+
+
+pnpm add axios zustand
+pnpm add react-hook-form zod @hookform/resolvers
